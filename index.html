@@ -1,0 +1,273 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>איתי שמואלי: מערכת ויזואליזציה לקטאן</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #f0f0f0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+        .background-wave {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent);
+            animation: wave 20s infinite ease-in-out;
+            z-index: -1;
+        }
+        @keyframes wave {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        .catan-object {
+            position: absolute;
+            font-size: 2em;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .dice { animation: floatDice 5s infinite ease-in-out, spin 3s infinite linear; }
+        .sheep { animation: floatSheep 6s infinite ease-in-out, bounce 2s infinite ease-in-out; }
+        .wheat { animation: floatWheat 7s infinite ease-in-out, sway 2.5s infinite ease-in-out; }
+        .brick { animation: floatBrick 8s infinite ease-in-out, tumble 2s infinite ease-in-out; }
+        .ore { animation: floatOre 9s infinite ease-in-out, pulse 2.2s infinite ease-in-out; }
+        .settlement { animation: floatSettlement 10s infinite ease-in-out, glow 1.5s infinite ease-in-out; }
+        @keyframes floatDice { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-20px, 30px); } }
+        @keyframes floatSheep { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(25px, -25px); } }
+        @keyframes floatWheat { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-15px, -20px); } }
+        @keyframes floatBrick { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(20px, 25px); } }
+        @keyframes floatOre { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-25px, -15px); } }
+        @keyframes floatSettlement { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(15px, -30px); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes sway { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(10deg); } }
+        @keyframes tumble { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(180deg); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        @keyframes glow { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+        header {
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+            animation: headerGlow 8s infinite ease-in-out;
+        }
+        @keyframes headerGlow {
+            0%, 100% { box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); }
+            50% { box-shadow: 0 12px 40px rgba(255, 107, 107, 0.7); }
+        }
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15), transparent);
+            opacity: 0.4;
+        }
+        header h1 {
+            font-size: 2.8em;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+            animation: fadeInUp 1s ease-out;
+        }
+        header p {
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            animation: fadeInUp 1.2s ease-out;
+        }
+        @keyframes fadeInUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .section {
+            margin: 60px 0;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            animation: sectionPulse 10s infinite ease-in-out;
+        }
+        @keyframes sectionPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        .section h2 {
+            font-size: 2.2em;
+            font-weight: 600;
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 50px;
+        }
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            animation: btnWiggle 5s infinite ease-in-out;
+        }
+        @keyframes btnWiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(2deg); }
+            75% { transform: rotate(-2deg); }
+        }
+        .btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+        }
+        .btn::after {
+            content: '🎲';
+            position: absolute;
+            top: 50%;
+            right: -30px;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+            transition: right 0.3s;
+        }
+        .btn:hover::after {
+            right: 10px;
+        }
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+            header p {
+                font-size: 1.1em;
+            }
+            .btn {
+                padding: 12px 30px;
+                font-size: 1em;
+            }
+            .catan-object {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-wave"></div>
+    <div class="catan-object dice" style="top: 5%; left: 5%;">🎲</div>
+    <div class="catan-object sheep" style="top: 10%; right: 10%;">🐑</div>
+    <div class="catan-object wheat" style="top: 20%; left: 15%;">🌾</div>
+    <div class="catan-object brick" style="bottom: 15%; right: 10%;">🧱</div>
+    <div class="catan-object ore" style="bottom: 20%; left: 10%;">⛰️</div>
+    <div class="catan-object settlement" style="top: 15%; right: 15%;">🏠</div>
+    <header>
+        <h1>המערכת של איתי שמואלי: ויזואליזציה אסטרטגית לקטאן</h1>
+        <p>צללו למערכת ויזואליזציה כל כך מגניבה שהיא גורמת לכבשים בקטאן לפתוח סטארט-אפ! 🐑 גרפים שיקפיצו את האסטרטגיה שלכם כמו טסלה על טורבו! 🚗</p>
+    </header>
+    <div class="container">
+        <div class="section">
+            <h2>מהי המערכת הזו?</h2>
+            <p>פותחה על ידי איתי שמואלי, גאון הקוביות, המערכת הזו היא כלי ויזואלי מתקדם שמסייע לשחקני קטאן לקבל החלטות אסטרטגיות חכמות. היא מנתחת מלאי, רווחים ואחוזי רווח מול תקציבים, והופכת את המשחק למסיבה של תובנות! 😄</p>
+        </div>
+        <div class="section">
+            <h2>למה זה מגניב?</h2>
+            <p>הגרפים שלנו כל כך ברורים שהם גורמים לקלפים בקטאן לקנא! הם עוזרים לכם להבין איך לנהל משאבים, מתי לסחור, ואיך לנצח את החברים שלכם בלי שהם ישימו לב. בנוסף, זה כל כך כיף שתשכחו שזו בכלל מערכת מידע! 🎉</p>
+        </div>
+        <div class="buttons">
+            <a href="dash1.html" class="btn">מערכת 1: מלאי מול תקציבים</a>
+            <a href="dash2.html" class="btn">מערכת 2: רווח מול תקציבים</a>
+            <a href="dash3.html" class="btn">מערכת 3: אחוזי הרווח מול התקציבים</a>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', () => {
+                button.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    button.style.transform = 'scale(1)';
+                }, 150);
+                const quips = [
+                    'יאללה, תפסו את הכבשים, הגרפים מתחילים לרקוד! 🐑💃',
+                    'תחזיקו חזק, זה כמו זריקת קובייה של 12! 🎲🔥',
+                    'לחצתם? תתכוננו לתובנות שיגרמו לסירי להתפוצץ! 😆'
+                ];
+                alert(quips[Math.floor(Math.random() * quips.length)]);
+            });
+        });
+    </script>
+</body>
+</html>
